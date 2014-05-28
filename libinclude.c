@@ -1,16 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/time.h>
+#include <time.h>
+
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <syslog.h>
-
-#define PID_FILE "/var/run/smartqd.pid"
-#define LOG_FILE "/var/log/smartqd.log"
 
 
 /**
@@ -69,6 +68,14 @@ char* getCommand(char command[128])
     return comText;
 }
 
+int mainExit(int code)
+{
+    exit(code);
+    // return c;
+    return 0;
+}
+
+
 /**
  * функция записи строки в лог
  * 
@@ -76,12 +83,12 @@ char* getCommand(char command[128])
  *
  * @return int
  */
-int WriteLog(char *msg)
+int WriteLog(char *msg, const char* fname)
 {
     FILE* f;
     char* time;
 
-    f = fopen(LOG_FILE, "a");
+    f = fopen(fname, "a");
     if (f) {
         time = getTime();
         fprintf(f, "[%s] [DAEMON] %s", time, msg);
@@ -99,7 +106,7 @@ int WriteLog(char *msg)
  * 
  * @return int
  */
-int exists(const char *fname) 
+int FileExists(const char *fname) 
 {
     FILE *file;
 
@@ -114,15 +121,15 @@ int exists(const char *fname)
 /**
  * Запись ID текущего процесса в файл
  *
- * @param Filename char файл
+ * @param fname char файл
  * 
  * @return  int
  */
-int SetPidFile(char* Filename) 
+int SetPidFile(const char* fname) 
 {
     FILE* f;
 
-    f = fopen(Filename, "w+");
+    f = fopen(fname, "w+");
     if (f) {
         fprintf(f, "%u", getpid());
         fclose(f);

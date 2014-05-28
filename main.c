@@ -17,14 +17,27 @@
 #define CHILD_NEED_TERMINATE    2
 
 
-//
-//
+#define PID_FILE "/tmp/fobia/fobiad.pid"
+#define LOG_FILE "/tmp/fobia/fobiad.log"
 
+//
+//
+int PrintLog(char *msg);
+int main(int argc, char* argv[]);
+void DestroyWorkThread();
+int InitWorkThread();
+int Daemon(char *command);
+
+
+// 
 int PrintLog(char *msg)
 {
     printf(msg);
-    WriteLog(msg);
+    if (!WriteLog(msg, LOG_FILE)) {
+        printf("Не удалось записать в файл");
+    }
 }
+
 
 /**
  * Точка входа
@@ -34,41 +47,27 @@ int PrintLog(char *msg)
  */
 int main(int argc, char* argv[]) 
 {
-    WriteLog("Daemon Start\n");
+    PrintLog("Daemon Start\n");
 
-    pid_t parpid, sid;
-
-    // если параметров командной строки меньше двух, то покажем как использовать демана
+    // если параметров командной строки меньше двух, 
+    // то покажем как использовать демана
     if (argc != 2) {
-        printf("Usage: smartqd <command>\n");
-        // return -1;
+        printf("Usage: cmd <command>\n");
         exit(1);
     }
 
     char *command = argv[1];
 
 
-    if (exists(PID_FILE)) {
+
+    // System OS
+    // ----------------
+    if (FileExists(PID_FILE)) {
         PrintLog("Error: Процесс уже запущен\n");
         exit(1);
     }
-    FILE* f = fopen(PID_FILE, "a");
-    if ( ! f ) {
-        PrintLog("Error: Неудалось создать файл PID\n");
-        exit(1);
-    } else {
-        fclose(f);
-    }
 
-    parpid = fork(); // создаем дочерний процесс
-    if (parpid < 0) {
-        PrintLog("Error: Хуевый fork\n");
-        exit(1);
-    } else if (parpid != 0) {
-        PrintLog("Error: Нулевой форк\n");
-        exit(0);
-    }
-
+    pid_t sid;
     umask(0);       // даем права на работу с фс
     sid = setsid(); // генерируем уникальный индекс процесса
     if (sid < 0) {
@@ -81,11 +80,26 @@ int main(int argc, char* argv[])
 
     // переходим в корень диска, если мы этого не сделаем, то могут быть проблемы.
     // к примеру с размантированием дисков
-    if ((chdir("/")) < 0) { //выходим в корень фс
+    if ( (chdir("/") ) < 0) { //выходим в корень фс
         PrintLog("Error: Не удалось сменить коталог\n");
         exit(1);
     }
 
+    // FORK
+    // ----------------
+    pid_t parpid;
+    parpid = fork(); // создаем дочерний процесс
+    if (parpid < 0) {
+        PrintLog("Error: Хуевый fork\n");
+        exit(1);
+    } else if (parpid != 0) {
+        PrintLog("Error: Нулевой форк\n");
+        exit(0);
+    }
+
+
+    // Start DAEMON
+    // ----------------
     // закрываем дискрипторы ввода/вывода/ошибок, так как нам они больше не понадобятся
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
@@ -93,7 +107,10 @@ int main(int argc, char* argv[])
 
     // Данная функция будет осуществлять слежение за процессом
     Daemon(argv[1]);
+
+    exit(0);
 }
+
 
 /**
  * собственно наш бесконечный цикл демона
@@ -107,17 +124,31 @@ int Daemon(char *command)
     strcat(log, command);
     strcat(log, "\n");
 
-    WriteLog(log);
+    WriteLog(log, LOG_FILE);
 
 
-    while (1) {
-        log = getCommand(command);
-        // WriteLog("Error: Процесс уже запущен\n");
-        // ждем 2 секунды до следующей итерации
-         WriteLog(log);
+    // while (1) {
+    //     log = getCommand(command);
+    //     // WriteLog("Error: Процесс уже запущен\n");
+    //     // ждем 2 секунды до следующей итерации
+    //     WriteLog(log, LOG_FILE);
          
-        sleep(2);
-    }
+    //     sleep(2);
+    // }
     return 0;
 }
 
+
+// функция для остановки потоков и освобождения ресурсов
+void DestroyWorkThread()
+{
+    // тут должен быть код который остановит все потоки и
+    // корректно освободит ресурсы
+}
+
+// функция которая инициализирует рабочие потоки
+int InitWorkThread()
+{
+    // код функции
+    return 1;
+}

@@ -8,21 +8,20 @@ prefix?=${DESTDIR}
 EXEC_FILES=fobiad
 
 all:
-	@echo "usage: make install     -> installs git-ftp only"
-	@echo "       make install-man -> installs man pages only"
+	@echo "usage: make install     -> installs only"
 	@echo "       make install-all -> installs git-ftp and man pages"	
-	@echo "       make uninstall"
-	@echo "       make uninstall-man"
-	@echo "       make uninstall-all"
 	@echo "       make clean"
 
 install:
-	mkdir build
+	mkdir -p build
+	gcc main.c -o build/$(EXEC_FILES)
 
-install-build:
-	@echo mkdir build
+brun: 
+	@echo "---------------"
+	@echo ""
+	@build/$(EXEC_FILES)
 
-install-all: install install-build
+install-all: install brun
 
 
 clean:
