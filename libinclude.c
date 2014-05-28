@@ -11,6 +11,10 @@
 #include <fcntl.h>
 #include <syslog.h>
 
+// rlimit
+// #include <sys/time.h> 
+#include <sys/resource.h> 
+// #include <unistd.h>
 
 /**
  * функция возвращает форматированную дату и время
@@ -137,4 +141,29 @@ int SetPidFile(const char* fname)
     } else {
         return 0;
     }
+}
+
+
+
+
+
+/**
+ * функция установки максимального кол-во дескрипторов которое может быть открыто 
+ * @param  MaxFd максимум форков
+ * @return       [description]
+ */
+int SetFdLimit(int MaxFd)
+{
+    struct rlimit lim;
+    int           status;
+
+    // зададим текущий лимит на кол-во открытых дискриптеров
+    lim.rlim_cur = MaxFd;
+    // зададим максимальный лимит на кол-во открытых дискриптеров
+    lim.rlim_max = MaxFd;
+
+    // установим указанное кол-во
+    status = setrlimit(RLIMIT_NOFILE, &lim);
+
+    return status;
 }

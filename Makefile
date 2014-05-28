@@ -14,6 +14,7 @@ all:
 
 install:
 	mkdir -p build
+	rm -f build/$(EXEC_FILES)
 	gcc main.c -o build/$(EXEC_FILES)
 
 brun: 
