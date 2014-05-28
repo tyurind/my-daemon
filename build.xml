@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="smart-queue-daemon" default="build" basedir=".">
+
+    <!-- Переменые базы -->
+    <property name="daemon.name" value="smartqd" />
+    <property name="daemon.pid.file" value="/var/run/${daemon.name}.pid" />
+    <property name="daemon.log.file" value="/var/log/${daemon.name}.log" />
+
+
+    <target name="show" depends="_daemon-pid" >
+      <echo message="datemsg: ${datemsg}" />
+      <echo message="TSTAMP: ${TSTAMP}; DSTAMP: ${DSTAMP}; TODAY: ${TODAY}" />
+
+      <echo message="PID: ${daemon.pid}" />
+    </target>
+
+    <!--
+        #
+        # targe
+        #
+    -->
+    <target name="build" description="Собрать проект" depends="clear" >
+        <mkdir dir="${basedir}/build" />
+
+        <exec executable="gcc">
+            <arg value="${basedir}/main.c" />
+            <arg value="-o" />
+            <arg value="${basedir}/${daemon.name}" />
+        </exec>
+
+        <echo message="Build: ${basedir}/${daemon.name}" />
+    </target>
+
+    <target name="clear" description="Очистить" depends="_daemon-stop"  >
+        <delete file="${basedir}/build" />
+    </target>
+
+
+    <target name="_daemon-stop" depends="_daemon-pid" if="daemon.pid" >
+        <echo message="PID: ${daemon.pid}" />
+
+        <exec executable="kill">
+            <arg value="-9" />
+            <arg value="${daemon.pid}" />
+        </exec>
+
+        <delete file="${daemon.pid.file}" />
+    </target>
+
+
+
+    <target name="_daemon-pid" >
+        <local name="daemon.pid.tmp" />
+        <loadfile property="daemon.pid" srcFile="${daemon.pid.file}" failonerror="false" />
+    </target>
+
+
+
+
+    <!--
+        #
+        # Системные переменые
+        #
+    -->
+    <property environment="env" />
+    <condition property="os.bat" value=".bat" else="">
+        <equals arg1="${env.OS}" arg2="Windows_NT" />
+    </condition>
+    <condition property="os.exe"  value=".exe" else="">
+        <equals arg1="${env.OS}" arg2="Windows_NT" />
+    </condition>
+    <condition property="os.root"  value="Z\:" else="/">
+        <equals arg1="${env.OS}" arg2="Windows_NT" />
+    </condition>
+    <condition property="exec.bash"  value="C:/cygwin/bin/bash.exe" else="sh">
+        <equals arg1="${env.OS}" arg2="Windows_NT" />
+    </condition>
+
+    <property name="exec.mysql" value="mysql${os.exe}" />
+    <property name="exec.mysqldump" value="mysqldump${os.exe}" />
+    <property name="exec.phpab" value="phpab${os.bat}" />
+    <property name="exec.php" value="php${os.bat}" />
+
+    <tstamp>
+      <format property="datemsg" pattern="d-MMM-yyyy hh:mm:ss" locale="en,GB" />
+    </tstamp>
+</project>
